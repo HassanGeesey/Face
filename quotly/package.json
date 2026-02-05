@@ -1,0 +1,10 @@
+{
+  "name": "quotly",
+  "version": "1.0.0",
+  "description": "Quotation generation app",
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}
