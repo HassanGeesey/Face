@@ -1,0 +1,9 @@
+{
+  "name": "quotly",
+  "version": "1.0.0",
+  "description": "Quotly - PDF generation for React Native",
+  "type": "module",
+  "main": "src/index.js",
+  "dependencies": {},
+  "devDependencies": {}
+}
