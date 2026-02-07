@@ -1,0 +1,10 @@
+{
+  "name": "quotly",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Quotation generation utility library",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test.js"
+  }
+}
