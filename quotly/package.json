@@ -1,0 +1,13 @@
+{
+  "name": "quotly",
+  "version": "1.0.0",
+  "description": "Quotation generation library for React Native",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
