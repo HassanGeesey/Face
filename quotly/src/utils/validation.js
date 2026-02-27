@@ -55,6 +55,11 @@ export function validateQuotation(quotation) {
     errors.push("Customer name is required.");
   }
 
+  // Currency Validation
+  if (quotation.currency && typeof quotation.currency !== 'string') {
+    errors.push("Currency must be a string.");
+  }
+
   // Date Validation
   if (!quotation.date) {
     errors.push("Quotation date is missing.");
