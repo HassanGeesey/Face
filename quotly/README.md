@@ -15,6 +15,7 @@ Quotly is a lightweight, modular library for managing quotations and generating 
 - `src/utils/validation.js`: Input validation rules.
 - `src/services/pdfService.js`: API integration for PDF generation.
 - `src/modes.js`: Operation mode orchestrator (`quotlyManager`).
+- `src/services/storageService.js`: Offline storage utility.
 - `src/config.js`: Centralized configuration.
 
 ## Usage
@@ -47,6 +48,24 @@ const pdfBlob = await quotlyManager(quotation, 'B');
 // Mode C: Validate & Review
 const report = await quotlyManager(quotation, 'C');
 ```
+
+### 3. Offline Storage
+By default, Quotly uses an in-memory storage for the current session. For persistent storage in React Native, you should configure a storage engine like `@react-native-async-storage/async-storage`.
+
+```javascript
+import { saveQuotationLocally, getLocalQuotations, setStorageEngine } from 'quotly';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Initialize once in your app entry point
+setStorageEngine(AsyncStorage);
+
+// Then use as normal
+await saveQuotationLocally(quotation);
+const history = await getLocalQuotations();
+```
+
+## Example Component
+Check `example/QuotationView.js` for a full React Native implementation example.
 
 ## Configuration
 You can override the default API Key and Template ID via environment variables or runtime options:

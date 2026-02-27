@@ -7,6 +7,7 @@ import {
 } from './src/utils/calculations.js';
 import { validateQuotation, isValidDate } from './src/utils/validation.js';
 import { quotlyManager } from './src/modes.js';
+import { saveQuotationLocally, getLocalQuotations, clearLocalQuotations, setStorageEngine } from './src/services/storageService.js';
 
 // Mock data for testing
 const mockQuotation = {
@@ -63,7 +64,32 @@ async function runTests() {
   const invalidErrors = validateQuotation(invalidQuotation);
   assert.ok(invalidErrors.length > 0, "Invalid date format should trigger error");
 
-  // 3. Mode Orchestration (Manager)
+  console.log("Testing Currency Validation...");
+  const invalidCurrency = { ...mockQuotation, currency: 123 };
+  const currencyErrors = validateQuotation(invalidCurrency);
+  assert.ok(currencyErrors.includes("Currency must be a string."), "Numeric currency should fail validation");
+
+  // 3. Storage Service
+  console.log("Testing Storage Service...");
+
+  // Test Custom Storage Engine
+  let mockDB = {};
+  setStorageEngine({
+    getItem: async (key) => mockDB[key] || null,
+    setItem: async (key, value) => { mockDB[key] = value; }
+  });
+
+  await clearLocalQuotations();
+  const initialDocs = await getLocalQuotations();
+  assert.strictEqual(initialDocs.length, 0);
+
+  await saveQuotationLocally(mockQuotation);
+  const savedDocs = await getLocalQuotations();
+  assert.strictEqual(savedDocs.length, 1);
+  assert.strictEqual(savedDocs[0].customer.name, "John Doe");
+  assert.ok(savedDocs[0].id, "Saved quotation should have an ID");
+
+  // 4. Mode Orchestration (Manager)
   console.log("Testing Quotly Manager Modes...");
 
   // Mode A: Debug JSON
