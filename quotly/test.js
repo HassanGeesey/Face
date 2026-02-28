@@ -7,6 +7,7 @@ import {
 } from './src/utils/calculations.js';
 import { validateQuotation, isValidDate } from './src/utils/validation.js';
 import { quotlyManager } from './src/modes.js';
+import { storageService, setStorageEngine } from './src/services/storageService.js';
 
 // Mock data for testing
 const mockQuotation = {
@@ -63,7 +64,55 @@ async function runTests() {
   const invalidErrors = validateQuotation(invalidQuotation);
   assert.ok(invalidErrors.length > 0, "Invalid date format should trigger error");
 
-  // 3. Mode Orchestration (Manager)
+  console.log("Testing New Validation Rules...");
+  // Test: Logo is now required
+  const noLogoQuotation = { ...mockQuotation, company: { ...mockQuotation.company, logo: "" } };
+  const noLogoErrors = validateQuotation(noLogoQuotation);
+  assert.ok(noLogoErrors.includes("Company logo is required."));
+
+  // Test: Tax rate must be non-negative
+  const negTaxQuotation = { ...mockQuotation, taxRate: -5 };
+  const negTaxErrors = validateQuotation(negTaxQuotation);
+  assert.ok(negTaxErrors.includes("Tax rate must be a non-negative number."));
+
+  // Test: Discount must be non-negative
+  const negDiscountQuotation = { ...mockQuotation, discount: -10 };
+  const negDiscountErrors = validateQuotation(negDiscountQuotation);
+  assert.ok(negDiscountErrors.includes("Discount must be a non-negative number."));
+
+  // Test: Currency must be a string
+  const invalidCurrencyQuotation = { ...mockQuotation, currency: 123 };
+  const invalidCurrencyErrors = validateQuotation(invalidCurrencyQuotation);
+  assert.ok(invalidCurrencyErrors.includes("Currency must be a string."));
+
+  // 3. Storage Service
+  console.log("Testing Storage Service...");
+  // Use default memory fallback
+  await storageService.saveQuotation("test_1", mockQuotation);
+  const retrieved = await storageService.getQuotation("test_1");
+  assert.strictEqual(retrieved.grandTotal, mockQuotation.grandTotal);
+
+  const all = await storageService.getAllQuotations();
+  assert.ok(all.length >= 1);
+  assert.ok(all.some(q => q.customer.name === "John Doe"));
+
+  await storageService.deleteQuotation("test_1");
+  const deleted = await storageService.getQuotation("test_1");
+  assert.strictEqual(deleted, null);
+
+  // Test Dependency Injection
+  let mockEngineCalled = false;
+  const mockEngine = {
+    async setItem(key, val) { mockEngineCalled = true; },
+    async getItem(key) { return null; },
+    async removeItem(key) {},
+    async getAllKeys() { return []; }
+  };
+  setStorageEngine(mockEngine);
+  await storageService.saveQuotation("test_inject", mockQuotation);
+  assert.strictEqual(mockEngineCalled, true, "Custom storage engine should have been called");
+
+  // 4. Mode Orchestration (Manager)
   console.log("Testing Quotly Manager Modes...");
 
   // Mode A: Debug JSON
