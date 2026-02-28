@@ -47,7 +47,11 @@ export function validateQuotation(quotation) {
     if (!name?.trim()) errors.push("Company name is required.");
     if (!email?.trim()) errors.push("Company email is required.");
     if (!address?.trim()) errors.push("Company address is required.");
-    if (logo && !isValidURL(logo)) errors.push("Company logo URL is invalid.");
+    if (!logo?.trim()) {
+      errors.push("Company logo is required.");
+    } else if (!isValidURL(logo)) {
+      errors.push("Company logo URL is invalid.");
+    }
   }
 
   // Customer Validation
@@ -60,6 +64,19 @@ export function validateQuotation(quotation) {
     errors.push("Quotation date is missing.");
   } else if (!isValidDate(quotation.date)) {
     errors.push("Date must be in DD/MM/YYYY format.");
+  }
+
+  // Tax and Discount Validation
+  if (quotation.taxRate !== undefined && (typeof quotation.taxRate !== 'number' || quotation.taxRate < 0)) {
+    errors.push("Tax rate must be a non-negative number.");
+  }
+  if (quotation.discount !== undefined && (typeof quotation.discount !== 'number' || quotation.discount < 0)) {
+    errors.push("Discount must be a non-negative number.");
+  }
+
+  // Currency Validation
+  if (quotation.currency !== undefined && typeof quotation.currency !== 'string') {
+    errors.push("Currency must be a string.");
   }
 
   // Line Items Validation
