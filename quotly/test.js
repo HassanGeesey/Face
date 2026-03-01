@@ -7,6 +7,7 @@ import {
 } from './src/utils/calculations.js';
 import { validateQuotation, isValidDate } from './src/utils/validation.js';
 import { quotlyManager } from './src/modes.js';
+import { storageService, setStorageEngine } from './src/services/storageService.js';
 
 // Mock data for testing
 const mockQuotation = {
@@ -82,6 +83,70 @@ async function runTests() {
   const tamperedQuotation = { ...mockQuotation, grandTotal: "500.00" };
   const tamperedResult = await quotlyManager(tamperedQuotation, 'C');
   assert.strictEqual(tamperedResult.integrityCheck, false, "Integrity check should fail if totals don't match");
+
+  // 4. Storage Service
+  console.log("Testing Storage Service...");
+  const saved = await storageService.saveQuotation(mockQuotation);
+  assert.ok(saved.id, "Saved quotation should have an ID");
+
+  const fetched = await storageService.getQuotation(saved.id);
+  assert.strictEqual(fetched.company.name, mockQuotation.company.name);
+
+  // Template ID Priority Test
+  console.log("Testing Template ID Priority...");
+  // We need to mock fetch to test this properly without real API calls
+  const originalFetch = global.fetch;
+  let capturedUrl = "";
+  global.fetch = async (url) => {
+    capturedUrl = url;
+    return { ok: true, blob: async () => ({}) };
+  };
+
+  try {
+    // 1. Priority: options.templateId
+    await quotlyManager(mockQuotation, 'B', { templateId: 'opt-123' });
+    assert.ok(capturedUrl.includes('templateId=opt-123'));
+
+    // 2. Priority: quotation.templateId
+    await quotlyManager({ ...mockQuotation, templateId: 'quot-456' }, 'B');
+    assert.ok(capturedUrl.includes('templateId=quot-456'));
+
+    // 3. Priority: CONFIG.TEMPLATE_ID
+    await quotlyManager(mockQuotation, 'B');
+    assert.ok(capturedUrl.includes('templateId=fa5790d'));
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  const all = await storageService.getAllQuotations();
+  assert.ok(all.length > 0);
+
+  await storageService.deleteQuotation(saved.id);
+  const deleted = await storageService.getQuotation(saved.id);
+  assert.strictEqual(deleted, null);
+
+  // Storage Dependency Injection
+  let diCalled = false;
+  const mockEngine = {
+    getItem: async () => { diCalled = true; return null; },
+    setItem: async () => {},
+    removeItem: async () => {}
+  };
+  setStorageEngine(mockEngine);
+  await storageService.getAllQuotations();
+  assert.ok(diCalled, "Custom storage engine should be used after injection");
+
+  // 5. Advanced Validation
+  console.log("Testing Advanced Validation...");
+  const invalidFinancials = { ...mockQuotation, taxRate: -5, discount: -10, currency: 123 };
+  const financialErrors = validateQuotation(invalidFinancials);
+  assert.ok(financialErrors.includes("Tax rate must be a non-negative number."));
+  assert.ok(financialErrors.includes("Discount must be a non-negative number."));
+  assert.ok(financialErrors.includes("Currency must be a string."));
+
+  const missingLogo = { ...mockQuotation, company: { ...mockQuotation.company, logo: "" } };
+  const logoErrors = validateQuotation(missingLogo);
+  assert.ok(logoErrors.includes("Company logo URL is required."));
 
   console.log("✅ All tests passed successfully!");
 }
