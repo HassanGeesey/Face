@@ -5,9 +5,10 @@ Quotly is a lightweight, modular library for managing quotations and generating 
 ## Features
 - **Modular Data Structures**: Well-defined types for Companies, Customers, Line Items, and Quotations.
 - **Financial Calculations**: Automatic calculation of line item totals, subtotals, tax, and grand totals.
-- **Validation**: Built-in rules for ensuring data integrity (URLs, dates, required fields).
+- **Validation**: Built-in rules for ensuring data integrity (URLs, dates, required fields, and logo presence).
 - **Multiple Modes**: Support for debugging JSON, PDF generation, and detailed validation reviews.
-- **React Native Ready**: Safe environment variable handling and compatible with standard fetch API.
+- **Offline Storage**: Built-in service for saving and managing quotations locally with Dependency Injection support.
+- **React Native Ready**: Safe environment variable handling, compatible with standard fetch API, and includes a React Native example component.
 
 ## Project Structure
 - `src/types/index.js`: JSDoc type definitions and constants.
@@ -46,6 +47,17 @@ const pdfBlob = await quotlyManager(quotation, 'B');
 
 // Mode C: Validate & Review
 const report = await quotlyManager(quotation, 'C');
+```
+
+### 3. Offline Storage
+```javascript
+import { storageService, setStorageEngine } from 'quotly';
+
+// Optional: Inject AsyncStorage (React Native)
+// setStorageEngine(AsyncStorage);
+
+await storageService.saveQuotation(quotation);
+const allQuotations = await storageService.getAllQuotations();
 ```
 
 ## Configuration

@@ -8,7 +8,7 @@ import { CONFIG } from '../config.js';
  * @returns {Promise<Blob>} - Promise resolving to a PDF Blob.
  */
 export async function generatePDF(quotation, options = {}) {
-  const templateId = options.templateId || CONFIG.TEMPLATE_ID;
+  const templateId = options.templateId || quotation.templateId || CONFIG.TEMPLATE_ID;
   const apiKey = options.apiKey || CONFIG.API_KEY;
   const url = `${CONFIG.API_URL}?templateId=${templateId}`;
 
