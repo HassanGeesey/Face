@@ -6,6 +6,13 @@ import {
   calculateDetailedTotals
 } from './src/utils/calculations.js';
 import { validateQuotation, isValidDate } from './src/utils/validation.js';
+import {
+  saveQuotation,
+  getQuotation,
+  deleteQuotation,
+  getAllQuotations,
+  setStorageEngine
+} from './src/services/storageService.js';
 import { quotlyManager } from './src/modes.js';
 
 // Mock data for testing
@@ -82,6 +89,43 @@ async function runTests() {
   const tamperedQuotation = { ...mockQuotation, grandTotal: "500.00" };
   const tamperedResult = await quotlyManager(tamperedQuotation, 'C');
   assert.strictEqual(tamperedResult.integrityCheck, false, "Integrity check should fail if totals don't match");
+
+  // 4. Storage Service Tests
+  console.log("Testing Storage Service (Volatile Default)...");
+  const testId = "test-123";
+  await saveQuotation(testId, mockQuotation);
+  const retrieved = await getQuotation(testId);
+  assert.deepStrictEqual(retrieved, mockQuotation);
+
+  const all = await getAllQuotations();
+  assert.ok(all.some(q => q.customer.name === mockQuotation.customer.name));
+
+  await deleteQuotation(testId);
+  const deleted = await getQuotation(testId);
+  assert.strictEqual(deleted, null);
+
+  console.log("Testing Storage Service Dependency Injection...");
+  const mockStorage = {
+    data: {},
+    async getItem(key) { return this.data[key]; },
+    async setItem(key, val) { this.data[key] = val; },
+    async removeItem(key) { delete this.data[key]; },
+    async getAllKeys() { return Object.keys(this.data); }
+  };
+
+  setStorageEngine(mockStorage);
+  await saveQuotation("di-test", { title: "DI Work" });
+  assert.ok(mockStorage.data["@quotly_quotation_di-test"]);
+
+  console.log("Testing New Validation Rules...");
+  const invalidTax = { ...mockQuotation, taxRate: -5 };
+  assert.ok(validateQuotation(invalidTax).includes("Tax rate must be a non-negative number."));
+
+  const invalidDiscount = { ...mockQuotation, discount: "not-a-number" };
+  assert.ok(validateQuotation(invalidDiscount).includes("Discount must be a non-negative number."));
+
+  const invalidCurrency = { ...mockQuotation, currency: 123 };
+  assert.ok(validateQuotation(invalidCurrency).includes("Currency must be a string."));
 
   console.log("✅ All tests passed successfully!");
 }

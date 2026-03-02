@@ -35,6 +35,7 @@
  * @property {number} [discount] - Optional fixed discount amount.
  * @property {string} [subTotal] - Optional subtotal before tax and discount.
  * @property {string} [templateId] - Optional template override.
+ * @property {string} [currency] - Optional currency symbol or code.
  */
 
 /**
@@ -56,4 +57,5 @@ export const EMPTY_QUOTATION = {
   },
   lineItems: [],
   grandTotal: "0.00",
+  currency: "",
 };
