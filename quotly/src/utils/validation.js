@@ -74,5 +74,18 @@ export function validateQuotation(quotation) {
     });
   }
 
+  // Tax and Discount Validation
+  if (quotation.taxRate !== undefined && (typeof quotation.taxRate !== 'number' || quotation.taxRate < 0)) {
+    errors.push("Tax rate must be a non-negative number.");
+  }
+  if (quotation.discount !== undefined && (typeof quotation.discount !== 'number' || quotation.discount < 0)) {
+    errors.push("Discount must be a non-negative number.");
+  }
+
+  // Currency Validation
+  if (quotation.currency !== undefined && typeof quotation.currency !== 'string') {
+    errors.push("Currency must be a string.");
+  }
+
   return errors;
 }
