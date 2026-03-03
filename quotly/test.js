@@ -7,6 +7,13 @@ import {
 } from './src/utils/calculations.js';
 import { validateQuotation, isValidDate } from './src/utils/validation.js';
 import { quotlyManager } from './src/modes.js';
+import {
+  setStorageEngine,
+  saveQuotation,
+  getQuotation,
+  getAllQuotations,
+  deleteQuotation
+} from './src/services/storageService.js';
 
 // Mock data for testing
 const mockQuotation = {
@@ -82,6 +89,36 @@ async function runTests() {
   const tamperedQuotation = { ...mockQuotation, grandTotal: "500.00" };
   const tamperedResult = await quotlyManager(tamperedQuotation, 'C');
   assert.strictEqual(tamperedResult.integrityCheck, false, "Integrity check should fail if totals don't match");
+
+  // 4. Storage Service
+  console.log("Testing Storage Service...");
+  const testQuotation = { id: "q123", ...mockQuotation };
+
+  // Use memory storage (default)
+  await saveQuotation(testQuotation);
+  const fetched = await getQuotation("q123");
+  assert.strictEqual(fetched.id, "q123");
+  assert.strictEqual(fetched.grandTotal, "198.00");
+
+  const all = await getAllQuotations();
+  assert.ok(all.length >= 1);
+  assert.ok(all.some(q => q.id === "q123"));
+
+  await deleteQuotation("q123");
+  const deleted = await getQuotation("q123");
+  assert.strictEqual(deleted, null);
+
+  // Test Dependency Injection
+  const mockEngine = {
+    store: {},
+    getItem: async (key) => mockEngine.store[key] || null,
+    setItem: async (key, val) => { mockEngine.store[key] = val; },
+    removeItem: async (key) => { delete mockEngine.store[key]; },
+    getAllKeys: async () => Object.keys(mockEngine.store)
+  };
+  setStorageEngine(mockEngine);
+  await saveQuotation({ id: "di_test", name: "DI" });
+  assert.ok(mockEngine.store["@quotly_quotation_di_test"]);
 
   console.log("✅ All tests passed successfully!");
 }
