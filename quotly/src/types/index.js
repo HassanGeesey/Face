@@ -35,6 +35,7 @@
  * @property {number} [discount] - Optional fixed discount amount.
  * @property {string} [subTotal] - Optional subtotal before tax and discount.
  * @property {string} [templateId] - Optional template override.
+ * @property {string} [currency] - Optional currency identifier (e.g., 'USD', '₹').
  */
 
 /**

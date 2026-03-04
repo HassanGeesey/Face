@@ -7,6 +7,13 @@ import {
 } from './src/utils/calculations.js';
 import { validateQuotation, isValidDate } from './src/utils/validation.js';
 import { quotlyManager } from './src/modes.js';
+import {
+  saveQuotation,
+  getQuotation,
+  getAllQuotations,
+  deleteQuotation,
+  setStorageEngine
+} from './src/services/storageService.js';
 
 // Mock data for testing
 const mockQuotation = {
@@ -63,7 +70,60 @@ async function runTests() {
   const invalidErrors = validateQuotation(invalidQuotation);
   assert.ok(invalidErrors.length > 0, "Invalid date format should trigger error");
 
-  // 3. Mode Orchestration (Manager)
+  // Additional Stricter Validation Tests
+  console.log("Testing Stricter Validation Rules...");
+  const noLogo = { ...mockQuotation, company: { ...mockQuotation.company, logo: "" } };
+  assert.ok(validateQuotation(noLogo).includes("Company logo URL is required."), "Logo should be required");
+
+  const invalidLogo = { ...mockQuotation, company: { ...mockQuotation.company, logo: "not-a-url" } };
+  assert.ok(validateQuotation(invalidLogo).includes("Company logo URL is invalid."), "Logo must be a valid URL");
+
+  const negTax = { ...mockQuotation, taxRate: -5 };
+  assert.ok(validateQuotation(negTax).includes("Tax rate must be a non-negative number."), "Tax rate must be non-negative");
+
+  const negDisc = { ...mockQuotation, discount: -10 };
+  assert.ok(validateQuotation(negDisc).includes("Discount must be a non-negative number."), "Discount must be non-negative");
+
+  const badCurrency = { ...mockQuotation, currency: 123 };
+  assert.ok(validateQuotation(badCurrency).includes("Currency must be a string if provided."), "Currency must be a string");
+
+  // 3. Storage Service
+  console.log("Testing Storage Service...");
+  const testId = "test-123";
+  await saveQuotation(testId, mockQuotation);
+
+  const retrieved = await getQuotation(testId);
+  assert.strictEqual(retrieved.customer.name, mockQuotation.customer.name, "Retrieved quotation should match saved one");
+
+  const all = await getAllQuotations();
+  assert.ok(all.length >= 1, "getAllQuotations should return at least one item");
+
+  await deleteQuotation(testId);
+  const afterDelete = await getQuotation(testId);
+  assert.strictEqual(afterDelete, null, "Quotation should be null after deletion");
+
+  // Dependency Injection Test
+  console.log("Testing Storage Engine DI...");
+  let customGetCalled = false;
+  const customEngine = {
+    getItem: async () => { customGetCalled = true; return null; },
+    setItem: async () => {},
+    removeItem: async () => {},
+    getAllKeys: async () => []
+  };
+  setStorageEngine(customEngine);
+  await getQuotation("any-id");
+  assert.strictEqual(customGetCalled, true, "Custom storage engine should be used after setStorageEngine");
+
+  // Restore default for subsequent tests if any
+  setStorageEngine({
+    getItem: async () => null,
+    setItem: async () => {},
+    removeItem: async () => {},
+    getAllKeys: async () => []
+  });
+
+  // 4. Mode Orchestration (Manager)
   console.log("Testing Quotly Manager Modes...");
 
   // Mode A: Debug JSON
