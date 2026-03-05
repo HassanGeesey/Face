@@ -87,6 +87,18 @@ async function runTests() {
   const badCurrency = { ...mockQuotation, currency: 123 };
   assert.ok(validateQuotation(badCurrency).includes("Currency must be a string if provided."), "Currency must be a string");
 
+  const noMobiles = { ...mockQuotation, company: { ...mockQuotation.company, mobiles: [] } };
+  assert.ok(validateQuotation(noMobiles).includes("At least one company mobile number is required."), "Mobiles required");
+
+  const noLandline = { ...mockQuotation, company: { ...mockQuotation.company, landline: "" } };
+  assert.ok(validateQuotation(noLandline).includes("Company landline is required."), "Landline required");
+
+  const stringQty = { ...mockQuotation, lineItems: [{ ...mockQuotation.lineItems[0], qty: "2" }] };
+  assert.ok(validateQuotation(stringQty).includes("Item #1 quantity must be a number."), "Qty must be number");
+
+  const stringPrice = { ...mockQuotation, lineItems: [{ ...mockQuotation.lineItems[0], unitPrice: "50" }] };
+  assert.ok(validateQuotation(stringPrice).includes("Item #1 unitPrice must be a number."), "Price must be number");
+
   // 3. Storage Service
   console.log("Testing Storage Service...");
   const testId = "test-123";

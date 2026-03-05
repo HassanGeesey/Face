@@ -43,7 +43,7 @@ export function validateQuotation(quotation) {
   if (!quotation.company) {
     errors.push("Company information is missing.");
   } else {
-    const { name, email, address, logo } = quotation.company;
+    const { name, email, address, logo, mobiles, landline } = quotation.company;
     if (!name?.trim()) errors.push("Company name is required.");
     if (!email?.trim()) errors.push("Company email is required.");
     if (!address?.trim()) errors.push("Company address is required.");
@@ -51,6 +51,12 @@ export function validateQuotation(quotation) {
       errors.push("Company logo URL is required.");
     } else if (!isValidURL(logo)) {
       errors.push("Company logo URL is invalid.");
+    }
+    if (!Array.isArray(mobiles) || mobiles.length === 0) {
+      errors.push("At least one company mobile number is required.");
+    }
+    if (!landline?.trim()) {
+      errors.push("Company landline is required.");
     }
   }
 
@@ -73,8 +79,18 @@ export function validateQuotation(quotation) {
     quotation.lineItems.forEach((item, index) => {
       const idxLabel = index + 1;
       if (!item.description?.trim()) errors.push(`Item #${idxLabel} missing description.`);
-      if (item.qty <= 0) errors.push(`Item #${idxLabel} must have quantity > 0.`);
-      if (item.unitPrice < 0) errors.push(`Item #${idxLabel} must have unitPrice >= 0.`);
+
+      if (typeof item.qty !== 'number') {
+        errors.push(`Item #${idxLabel} quantity must be a number.`);
+      } else if (item.qty <= 0) {
+        errors.push(`Item #${idxLabel} must have quantity > 0.`);
+      }
+
+      if (typeof item.unitPrice !== 'number') {
+        errors.push(`Item #${idxLabel} unitPrice must be a number.`);
+      } else if (item.unitPrice < 0) {
+        errors.push(`Item #${idxLabel} must have unitPrice >= 0.`);
+      }
     });
   }
 
