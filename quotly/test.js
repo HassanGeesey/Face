@@ -87,6 +87,29 @@ async function runTests() {
   const badCurrency = { ...mockQuotation, currency: 123 };
   assert.ok(validateQuotation(badCurrency).includes("Currency must be a string if provided."), "Currency must be a string");
 
+  const noLandline = { ...mockQuotation, company: { ...mockQuotation.company, landline: "" } };
+  assert.ok(validateQuotation(noLandline).includes("Company landline is required."), "Landline should be required");
+
+  const noMobiles = { ...mockQuotation, company: { ...mockQuotation.company, mobiles: [] } };
+  assert.ok(validateQuotation(noMobiles).includes("At least one company mobile number is required."), "Mobiles should be required");
+
+  // Rounding Consistency Test
+  console.log("Testing Rounding Consistency...");
+  const roundingQuotation = {
+    ...mockQuotation,
+    lineItems: [
+      { qty: 1, unitPrice: 0.333, description: "Item 1" }, // Rounded: 0.33
+      { qty: 1, unitPrice: 0.333, description: "Item 2" }, // Rounded: 0.33
+      { qty: 1, unitPrice: 0.333, description: "Item 3" }  // Rounded: 0.33
+    ],
+    taxRate: 0,
+    discount: 0
+  };
+  // Recalculating totals: Sum of rounded (0.33+0.33+0.33) = 0.99
+  // Raw calculation: 3 * 0.333 = 0.999 which would round to 1.00
+  const roundingResult = calculateDetailedTotals(roundingQuotation);
+  assert.strictEqual(roundingResult.subTotal, "0.99", "Subtotal should be sum of rounded line totals");
+
   // 3. Storage Service
   console.log("Testing Storage Service...");
   const testId = "test-123";

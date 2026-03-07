@@ -52,6 +52,10 @@ export function validateQuotation(quotation) {
     } else if (!isValidURL(logo)) {
       errors.push("Company logo URL is invalid.");
     }
+    if (!quotation.company.landline?.trim()) errors.push("Company landline is required.");
+    if (!Array.isArray(quotation.company.mobiles) || quotation.company.mobiles.length === 0) {
+      errors.push("At least one company mobile number is required.");
+    }
   }
 
   // Customer Validation
