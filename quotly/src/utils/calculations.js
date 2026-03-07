@@ -39,8 +39,9 @@ export function calculateGrandTotal(items) {
  * @returns {Object} - Breakdown: { subTotal, taxAmount, grandTotal }
  */
 export function calculateDetailedTotals(quotation) {
+  // Use pre-calculated line totals to ensure consistency with displayed values
   const subTotalValue = quotation.lineItems.reduce(
-    (sum, item) => sum + (parseFloat(item.qty) || 0) * (parseFloat(item.unitPrice) || 0),
+    (sum, item) => sum + parseFloat(calculateLineTotal(item)),
     0
   );
 
