@@ -43,7 +43,7 @@ export function validateQuotation(quotation) {
   if (!quotation.company) {
     errors.push("Company information is missing.");
   } else {
-    const { name, email, address, logo } = quotation.company;
+    const { name, email, address, logo, mobiles, landline } = quotation.company;
     if (!name?.trim()) errors.push("Company name is required.");
     if (!email?.trim()) errors.push("Company email is required.");
     if (!address?.trim()) errors.push("Company address is required.");
@@ -51,6 +51,10 @@ export function validateQuotation(quotation) {
       errors.push("Company logo URL is required.");
     } else if (!isValidURL(logo)) {
       errors.push("Company logo URL is invalid.");
+    }
+    if (!landline?.trim()) errors.push("Company landline is required.");
+    if (!Array.isArray(mobiles) || mobiles.length === 0) {
+      errors.push("At least one company mobile number is required.");
     }
   }
 
