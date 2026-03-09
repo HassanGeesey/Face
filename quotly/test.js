@@ -57,6 +57,22 @@ async function runTests() {
   assert.strictEqual(detailed.taxAmount, "18.00");
   assert.strictEqual(detailed.grandTotal, "198.00");
 
+  // Rounding consistency test
+  const roundingQuotation = {
+    ...mockQuotation,
+    lineItems: [
+      { qty: 1, unitPrice: 0.333 }, // Total: "0.33"
+      { qty: 1, unitPrice: 0.333 }, // Total: "0.33"
+      { qty: 1, unitPrice: 0.333 }  // Total: "0.33"
+    ],
+    taxRate: 0,
+    discount: 0
+  };
+  const roundingDetailed = calculateDetailedTotals(roundingQuotation);
+  // Sum of individual rounded totals (0.33 + 0.33 + 0.33) = 0.99
+  // If we summed raw values (0.333 * 3) = 0.999 which rounds to 1.00
+  assert.strictEqual(roundingDetailed.subTotal, "0.99", "Subtotal should be sum of rounded line item totals");
+
   // 2. Validation Utility
   console.log("Testing Validation...");
   assert.strictEqual(isValidDate("25/12/2023"), true);
@@ -74,6 +90,12 @@ async function runTests() {
   console.log("Testing Stricter Validation Rules...");
   const noLogo = { ...mockQuotation, company: { ...mockQuotation.company, logo: "" } };
   assert.ok(validateQuotation(noLogo).includes("Company logo URL is required."), "Logo should be required");
+
+  const noLandline = { ...mockQuotation, company: { ...mockQuotation.company, landline: "" } };
+  assert.ok(validateQuotation(noLandline).includes("Company landline is required."), "Landline should be required");
+
+  const noMobiles = { ...mockQuotation, company: { ...mockQuotation.company, mobiles: [] } };
+  assert.ok(validateQuotation(noMobiles).includes("Company must have at least one mobile number."), "Mobiles should be required");
 
   const invalidLogo = { ...mockQuotation, company: { ...mockQuotation.company, logo: "not-a-url" } };
   assert.ok(validateQuotation(invalidLogo).includes("Company logo URL is invalid."), "Logo must be a valid URL");
@@ -142,6 +164,33 @@ async function runTests() {
   const tamperedQuotation = { ...mockQuotation, grandTotal: "500.00" };
   const tamperedResult = await quotlyManager(tamperedQuotation, 'C');
   assert.strictEqual(tamperedResult.integrityCheck, false, "Integrity check should fail if totals don't match");
+
+  // 5. PDF Service Template ID Prioritization
+  console.log("Testing PDF Service Template ID Prioritization...");
+  const originalFetch = globalThis.fetch;
+  let capturedUrl = "";
+  globalThis.fetch = async (url) => {
+    capturedUrl = url;
+    return { ok: true, blob: async () => ({ size: 100 }) };
+  };
+
+  try {
+    // 5.1. Option override
+    await quotlyManager(mockQuotation, 'B', { templateId: 'opt-id' });
+    assert.ok(capturedUrl.includes("templateId=opt-id"), "Should use templateId from options");
+
+    // 5.2. Quotation override
+    const quotWithTemplate = { ...mockQuotation, templateId: 'quot-id' };
+    await quotlyManager(quotWithTemplate, 'B');
+    assert.ok(capturedUrl.includes("templateId=quot-id"), "Should use templateId from quotation");
+
+    // 5.3. Default
+    await quotlyManager(mockQuotation, 'B');
+    assert.ok(capturedUrl.includes("templateId=fa5790d"), "Should use default templateId from config");
+
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 
   console.log("✅ All tests passed successfully!");
 }
