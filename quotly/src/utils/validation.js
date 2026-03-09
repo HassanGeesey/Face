@@ -43,10 +43,16 @@ export function validateQuotation(quotation) {
   if (!quotation.company) {
     errors.push("Company information is missing.");
   } else {
-    const { name, email, address, logo } = quotation.company;
+    const { name, email, address, logo, landline, mobiles } = quotation.company;
     if (!name?.trim()) errors.push("Company name is required.");
     if (!email?.trim()) errors.push("Company email is required.");
     if (!address?.trim()) errors.push("Company address is required.");
+    if (!landline || typeof landline !== 'string' || !landline.trim()) {
+      errors.push("Company landline is required.");
+    }
+    if (!Array.isArray(mobiles) || mobiles.length === 0) {
+      errors.push("Company must have at least one mobile number.");
+    }
     if (!logo?.trim()) {
       errors.push("Company logo URL is required.");
     } else if (!isValidURL(logo)) {
