@@ -40,7 +40,7 @@ export function calculateGrandTotal(items) {
  */
 export function calculateDetailedTotals(quotation) {
   const subTotalValue = quotation.lineItems.reduce(
-    (sum, item) => sum + (parseFloat(item.qty) || 0) * (parseFloat(item.unitPrice) || 0),
+    (sum, item) => sum + parseFloat(calculateLineTotal(item)),
     0
   );
 
