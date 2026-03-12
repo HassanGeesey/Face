@@ -57,6 +57,17 @@ async function runTests() {
   assert.strictEqual(detailed.taxAmount, "18.00");
   assert.strictEqual(detailed.grandTotal, "198.00");
 
+  // Rounding Consistency Check
+  console.log("Testing Rounding Consistency...");
+  const roundingQuotation = {
+    lineItems: [
+      { qty: 1, unitPrice: 10.333 },
+      { qty: 1, unitPrice: 10.333 }
+    ]
+  };
+  const roundedDetailed = calculateDetailedTotals(roundingQuotation);
+  assert.strictEqual(roundedDetailed.subTotal, "20.66", "Subtotal should be sum of rounded item totals");
+
   // 2. Validation Utility
   console.log("Testing Validation...");
   assert.strictEqual(isValidDate("25/12/2023"), true);
@@ -86,6 +97,12 @@ async function runTests() {
 
   const badCurrency = { ...mockQuotation, currency: 123 };
   assert.ok(validateQuotation(badCurrency).includes("Currency must be a string if provided."), "Currency must be a string");
+
+  const noLandline = { ...mockQuotation, company: { ...mockQuotation.company, landline: "" } };
+  assert.ok(validateQuotation(noLandline).includes("Company landline is required."), "Landline should be required");
+
+  const noMobiles = { ...mockQuotation, company: { ...mockQuotation.company, mobiles: [] } };
+  assert.ok(validateQuotation(noMobiles).includes("Company mobiles must be a non-empty array."), "Mobiles should be a non-empty array");
 
   // 3. Storage Service
   console.log("Testing Storage Service...");
