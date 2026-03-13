@@ -57,6 +57,20 @@ async function runTests() {
   assert.strictEqual(detailed.taxAmount, "18.00");
   assert.strictEqual(detailed.grandTotal, "198.00");
 
+  // Rounding Consistency Test
+  console.log("Testing Rounding Consistency...");
+  const roundingQuotation = {
+    lineItems: [
+      { qty: 1, unitPrice: 0.333 }, // rounds to 0.33
+      { qty: 1, unitPrice: 0.333 }, // rounds to 0.33
+      { qty: 1, unitPrice: 0.333 }  // rounds to 0.33
+    ]
+  };
+  // sum(0.333, 0.333, 0.333) = 0.999 -> rounds to 1.00 (old way)
+  // sum(0.33, 0.33, 0.33) = 0.99 (new way)
+  const roundingResult = calculateDetailedTotals(roundingQuotation);
+  assert.strictEqual(roundingResult.subTotal, "0.99", "Subtotal should be sum of rounded line totals");
+
   // 2. Validation Utility
   console.log("Testing Validation...");
   assert.strictEqual(isValidDate("25/12/2023"), true);
