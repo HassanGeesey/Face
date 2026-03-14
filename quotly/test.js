@@ -87,6 +87,12 @@ async function runTests() {
   const badCurrency = { ...mockQuotation, currency: 123 };
   assert.ok(validateQuotation(badCurrency).includes("Currency must be a string if provided."), "Currency must be a string");
 
+  const noLandline = { ...mockQuotation, company: { ...mockQuotation.company, landline: "" } };
+  assert.ok(validateQuotation(noLandline).includes("Company landline is required and must be a string."), "Landline should be required");
+
+  const emptyMobiles = { ...mockQuotation, company: { ...mockQuotation.company, mobiles: [] } };
+  assert.ok(validateQuotation(emptyMobiles).includes("Company mobiles must be a non-empty array."), "Mobiles should be a non-empty array");
+
   // 3. Storage Service
   console.log("Testing Storage Service...");
   const testId = "test-123";
